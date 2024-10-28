@@ -1,0 +1,33 @@
+trigger OrderLoyaltyPointsTrigger on Order__c (after insert) {
+    // Map to store customers and update their loyalty points
+    Map<Id, Customer__c> customerMap = new Map<Id, Customer__c>();
+
+    // Collect all customer IDs associated with new orders
+    for (Order__c order : Trigger.new) {
+        if (order.Customer__c != null) { // Ensure Customer__c is not null
+            customerMap.put(order.Customer__c, null);
+        }
+    }
+
+    // Fetch customer records for the collected customer IDs
+    if (!customerMap.isEmpty()) {
+        customerMap.putAll([SELECT Id, loyalty_points__c,Total_orders__c FROM Customer__c WHERE Id IN :customerMap.keySet()]);
+    }
+
+    // Update loyalty points for each customer
+    List<Customer__c> customersToUpdate = new List<Customer__c>();
+    for (Order__c order : Trigger.new) {
+        if (order.Customer__c != null) { // Check again in case of any missing value
+            Customer__c relatedCustomer = customerMap.get(order.Customer__c);
+            if (relatedCustomer != null) {
+                relatedCustomer.loyalty_points__c = (relatedCustomer.loyalty_points__c == null) ? 1 : relatedCustomer.Total_orders__c / 2;
+                customersToUpdate.add(relatedCustomer);
+            }
+        }
+    }
+
+    // Perform a single update call for all updated customers
+    if (!customersToUpdate.isEmpty()) {
+        update customersToUpdate;
+    }
+}

@@ -1,0 +1,42 @@
+@isTest
+public class OrderTriggerTest {
+    @isTest
+    public static void testOrderTrigger() {
+        
+        // Create a Customer record
+        Customer__c testCustomer = new Customer__c(Name = 'Test Customer', Contact_Information__c = '1234567890', Address__c = '123 Test St');
+        insert testCustomer;
+
+        // Create an Order record associated with the Customer
+        Order__c testOrder = new Order__c(Quantity__c = 5, Customer__c = testCustomer.Id);
+        
+        // Insert the Order and test the trigger
+        Test.startTest();
+        insert testOrder;
+        Test.stopTest();
+
+        // Retrieve the inserted Order
+        Order__c insertedOrder = [SELECT Total_Price__c FROM Order__c WHERE Id = :testOrder.Id];
+
+        // Verify that the Total Price was calculated correctly
+        System.assertEquals(500.00, insertedOrder.Total_Price__c, 'Total Price should be 500.00');
+    }
+
+    @isTest
+    public static void testOrderWithoutCustomer() {
+        // Create an Order record without a Customer
+        Order__c testOrderWithoutCustomer = new Order__c(Quantity__c = 5);
+        
+        // Insert the Order and test the trigger
+        Test.startTest();
+        insert testOrderWithoutCustomer;
+        Test.stopTest();
+
+        // Retrieve the inserted Order
+        Order__c insertedOrder = [SELECT Total_Price__c FROM Order__c WHERE Id = :testOrderWithoutCustomer.Id];
+
+        // Verify that the Total Price is set to 0
+        System.assertEquals(0, insertedOrder.Total_Price__c, 'Total Price should be 0 when no Customer is selected');
+
+    }
+}

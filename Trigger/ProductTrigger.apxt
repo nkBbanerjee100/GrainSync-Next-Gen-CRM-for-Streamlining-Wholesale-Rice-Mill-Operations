@@ -1,0 +1,19 @@
+trigger ProductTrigger on Product__c (before insert, before update) {
+    for (Product__c product : Trigger.new) {
+        // If Stock Level is not set, initialize it to 0
+        if (product.Stock_Level__c == null) {
+            product.Stock_Level__c = 0;
+        }
+        
+        // Validation: Ensure Product Name is not blank
+        if (String.isBlank(product.Product_Name__c)) {
+            product.addError('Product Name cannot be blank.');
+        }
+
+        // Validation: Ensure Price is not negative
+        if (product.Price__c < 0) {
+            product.addError('Price cannot be negative.');
+        }
+        
+    }
+}

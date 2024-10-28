@@ -1,0 +1,10 @@
+trigger PaymentTrigger on Payment__c (before insert, before update) {
+    for (Payment__c payment : Trigger.new) {
+        // Validation: Ensure Amount is greater than zero
+        if (payment.Amount__c <= 0) {
+            payment.addError('Payment Amount must be greater than zero.');
+        }
+
+       
+    }
+}

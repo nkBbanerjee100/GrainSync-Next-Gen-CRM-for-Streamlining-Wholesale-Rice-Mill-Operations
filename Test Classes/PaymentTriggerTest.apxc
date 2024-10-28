@@ -1,0 +1,51 @@
+@isTest
+public class PaymentTriggerTest {
+    @isTest
+    static void testPaymentTrigger() {
+        // Test case for inserting a valid payment record
+        Payment__c validPayment = new Payment__c(
+            Payment_Date__c = Date.today(),
+            Order__c = 'someOrderId', // replace with a valid Order__c Id
+            Amount__c = 100.00, // Valid amount
+            Status__c = 'Paid'
+        );
+
+        Test.startTest();
+        insert validPayment; // Should succeed
+        Test.stopTest();
+
+        // Verify the payment was inserted
+        Payment__c insertedPayment = [SELECT Id, Amount__c FROM Payment__c WHERE Id = :validPayment.Id];
+        System.assertNotEquals(null, insertedPayment, 'The payment should be inserted successfully.');
+        System.assertEquals(100.00, insertedPayment.Amount__c, 'The payment amount should match.');
+
+        // Test case for inserting an invalid payment record (amount <= 0)
+        Payment__c invalidPayment = new Payment__c(
+            Payment_Date__c = Date.today(),
+            Order__c = 'someOrderId', // replace with a valid Order__c Id
+            Amount__c = 0, // Invalid amount
+            Status__c = 'Unpaid'
+        );
+
+        Test.startTest();
+        try {
+            insert invalidPayment; // Should fail due to validation
+            System.assert(false, 'Expected an exception due to validation error');
+        } catch (DmlException e) {
+            // Expecting a DML exception
+            System.assert(e.getMessage().contains('Payment Amount must be greater than zero'), 'Validation message not found');
+        }
+        Test.stopTest();
+
+        // Test case for updating a payment record
+        validPayment.Amount__c = 150.00;
+
+        Test.startTest();
+        update validPayment; // Should succeed
+        Test.stopTest();
+
+        // Verify that the update was successful
+        Payment__c updatedPayment = [SELECT Amount__c FROM Payment__c WHERE Id = :validPayment.Id];
+        System.assertEquals(150.00, updatedPayment.Amount__c, 'The payment amount should be updated successfully.');
+    }
+}

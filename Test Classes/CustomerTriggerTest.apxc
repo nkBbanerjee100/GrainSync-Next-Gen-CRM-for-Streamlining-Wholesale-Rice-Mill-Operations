@@ -1,0 +1,39 @@
+@isTest
+public class CustomerTriggerTest {
+
+    @isTest
+    static void testCustomerBeforeTrigger() {
+        
+        // Test the CustomerBeforeTrigger to ensure Total_Orders__c is initialized
+
+        // Create a Customer record without setting Total_Orders__c
+        Customer__c testCustomer = new Customer__c(Name = 'Test Customer');
+        insert testCustomer;
+
+        // Fetch the inserted Customer and verify that Total_Orders__c is initialized to 0
+        testCustomer = [SELECT Id, Total_Orders__c FROM Customer__c WHERE Id = :testCustomer.Id];
+        System.assertEquals(0, testCustomer.Total_Orders__c, 'Total_Orders__c should be initialized to 0.');
+    }
+
+    @isTest
+    static void testCustomerAfterTrigger() {
+        // Test the CustomerAfterTrigger to ensure Total_Orders__c is updated based on related orders
+
+        // Create a Customer record and insert it
+        Customer__c testCustomer = new Customer__c(Name = 'Test Customer');
+        insert testCustomer;
+
+        // Create related Order records
+        Order__c order1 = new Order__c(Customer__c = testCustomer.Id, Order_Date__c = Date.today());
+        Order__c order2 = new Order__c(Customer__c = testCustomer.Id, Order_Date__c = Date.today());
+        insert new List<Order__c>{ order1, order2 };
+
+        // Update the Customer record to trigger the after update logic
+        update testCustomer;
+
+        // Fetch the Customer record and verify Total_Orders__c reflects the correct order count
+        testCustomer = [SELECT Id, Total_Orders__c FROM Customer__c WHERE Id = :testCustomer.Id];
+        System.assertEquals(2, testCustomer.Total_Orders__c, 'Total_Orders__c should reflect the number of related orders.');
+
+    }
+}

@@ -1,0 +1,51 @@
+@isTest
+public class DeliveryTriggerTest {
+    @isTest
+    static void testDeliveryTrigger() {
+        // Test case for inserting a valid delivery record
+        Delivery__c validDelivery = new Delivery__c(
+            Delivery_Date__c = Date.today().addDays(5),
+            Order__c = 'someOrderId', // replace with a valid Order__c Id
+            Shipment_Status__c = 'In Transit',
+            Delivery_Address__c = '123 Delivery St'
+        );
+        
+        Test.startTest();
+        insert validDelivery; // Should succeed
+        Test.stopTest();
+
+        // Verify the delivery was inserted
+        Delivery__c insertedDelivery = [SELECT Id, Delivery_Date__c FROM Delivery__c WHERE Id = :validDelivery.Id];
+        System.assertNotEquals(null, insertedDelivery, 'The delivery should be inserted successfully.');
+        System.assertEquals(Date.today().addDays(5), insertedDelivery.Delivery_Date__c, 'The delivery date should match.');
+
+        // Test case for inserting an invalid delivery record (past delivery date)
+        Delivery__c pastDelivery = new Delivery__c(
+            Delivery_Date__c = Date.today().addDays(-1),
+            Order__c = 'someOrderId', // replace with a valid Order__c Id
+            Shipment_Status__c = 'In Transit',
+            Delivery_Address__c = '123 Delivery St'
+        );
+
+        Test.startTest();
+        try {
+            insert pastDelivery; // Should fail due to validation
+            System.assert(false, 'Expected an exception due to validation error');
+        } catch (DmlException e) {
+            // Expecting a DML exception
+            System.assert(e.getMessage().contains('Delivery Date cannot be in the past'), 'Validation message not found');
+        }
+        Test.stopTest();
+
+        // Test case for updating a delivery record
+        validDelivery.Delivery_Date__c = Date.today().addDays(7);
+
+        Test.startTest();
+        update validDelivery; // Should succeed
+        Test.stopTest();
+
+        // Verify that the update was successful
+        Delivery__c updatedDelivery = [SELECT Delivery_Date__c FROM Delivery__c WHERE Id = :validDelivery.Id];
+        System.assertEquals(Date.today().addDays(7), updatedDelivery.Delivery_Date__c, 'The delivery date should be updated successfully.');
+    }
+}

@@ -1,0 +1,56 @@
+public class CustomerAfterTriggerHandler {
+    // Static variable to prevent recursion
+    private static Boolean isExecuted = false; 
+
+    public static void handleAfterInsertOrUpdate(List<Customer__c> customers) {
+        // Check if already executed to prevent recursion
+        if (isExecuted) {
+            return; // Exit if already executed
+        }
+        isExecuted = true; // Set executed to true
+
+        Set<Id> customerIds = new Set<Id>();
+        Map<Id, Integer> customerOrderCount = new Map<Id, Integer>();
+        
+        // Gather customer IDs from Trigger.new
+        for (Customer__c cust : customers) {
+            customerIds.add(cust.Id);
+        }
+
+        // Query orders related to these customers
+        List<Order__c> orders = [
+            SELECT Id, Customer__c 
+            FROM Order__c 
+            WHERE Customer__c IN :customerIds
+        ];
+
+        // Count orders for each customer
+        for (Order__c order : orders) {
+            if (customerOrderCount.containsKey(order.Customer__c)) {
+                customerOrderCount.put(order.Customer__c, customerOrderCount.get(order.Customer__c) + 1);
+            } else {
+                customerOrderCount.put(order.Customer__c, 1);
+            }
+        }
+
+        // Prepare customers for update
+        List<Customer__c> customersToUpdate = new List<Customer__c>();
+        for (Id customerId : customerOrderCount.keySet()) {
+            Customer__c cust = new Customer__c(Id = customerId);
+            cust.Total_Orders__c = customerOrderCount.get(customerId);
+            customersToUpdate.add(cust);
+        }
+
+        // Update customers with calculated order count
+        if (!customersToUpdate.isEmpty()) {
+            try {
+                update customersToUpdate;
+            } catch (DmlException e) {
+                System.debug('Error updating customers: ' + e.getMessage());
+            }
+        }
+
+        // Reset the executed flag after processing
+        isExecuted = false; 
+    }
+}

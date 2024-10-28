@@ -1,0 +1,9 @@
+trigger DeliveryTrigger on Delivery__c (before insert, before update) {
+    for (Delivery__c delivery : Trigger.new) {
+        // Validation: Ensure Delivery Date is not in the past
+        if (delivery.Delivery_Date__c != null && delivery.Delivery_Date__c < Date.today()) {
+            delivery.addError('Delivery Date cannot be in the past.');
+        }
+        
+    }
+}

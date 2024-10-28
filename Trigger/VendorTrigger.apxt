@@ -1,0 +1,50 @@
+trigger VendorTrigger on Vendor__c (before insert, before update) {
+    // Define a list to hold errors for invalid records
+    List<String> errorMessages = new List<String>();
+
+    for (Vendor__c vendor : Trigger.new) {
+        // Check if required fields are populated
+        if (String.isEmpty(vendor.Contact_Information__c)) {
+            errorMessages.add('Contact Information is required for Vendor: ' + vendor.Id);
+        }
+
+        if (String.isEmpty(vendor.Address__c)) {
+            errorMessages.add('Address is required for Vendor: ' + vendor.Id);
+        }
+
+        // If Products Supplied is not set, initialize it
+        if (vendor.Products_Supplied__c == null) {
+            vendor.Products_Supplied__c = 'No products supplied';
+        }
+
+        // Validate payment terms
+        if (vendor.Payment_Terms__c == null) {
+            errorMessages.add('Payment Terms must be specified for Vendor: ' + vendor.Id);
+        }
+    }
+
+    // Throw an error if any validation messages were collected
+    if (!errorMessages.isEmpty()) {
+        for (String error : errorMessages) {
+            // Add error messages to the trigger context
+            Trigger.new[0].addError(error);
+        }
+    }
+    
+    // Log changes if the vendor is updated
+    if (Trigger.isUpdate) {
+        for (Vendor__c vendor : Trigger.new) {
+            Vendor__c oldVendor = Trigger.oldMap.get(vendor.Id);
+            // Compare relevant fields to determine what has changed
+            if (vendor.Contact_Information__c != oldVendor.Contact_Information__c) {
+                System.debug('Contact Information changed for Vendor ID: ' + vendor.Id);
+            }
+            if (vendor.Address__c != oldVendor.Address__c) {
+                System.debug('Address changed for Vendor ID: ' + vendor.Id);
+            }
+            if (vendor.Payment_Terms__c != oldVendor.Payment_Terms__c) {
+                System.debug('Payment Terms changed for Vendor ID: ' + vendor.Id);
+            }
+        }
+    }
+}

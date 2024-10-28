@@ -1,0 +1,49 @@
+@isTest
+public class VendorTriggerTest {
+    @isTest
+    static void testVendorTrigger() {
+        // Test case for inserting a valid vendor
+        Vendor__c validVendor = new Vendor__c(
+            Contact_Information__c = '123 Test St',
+            Address__c = 'Test City, TC',
+            Products_Supplied__c = 'Rice',
+            Payment_Terms__c = 'Net 30'
+        );
+        
+        Test.startTest();
+        insert validVendor; // Should succeed
+        Test.stopTest();
+        
+        // Verify the vendor was inserted
+        Vendor__c insertedVendor = [SELECT Id, Contact_Information__c, Address__c FROM Vendor__c WHERE Id = :validVendor.Id];
+        System.assertNotEquals(null, insertedVendor, 'The vendor should be inserted successfully.');
+        System.assertEquals('123 Test St', insertedVendor.Contact_Information__c, 'The contact information should match.');
+        
+        // Test case for inserting an invalid vendor (missing required fields)
+        Vendor__c invalidVendor = new Vendor__c(
+            Payment_Terms__c = 'Net 30' // Missing contact information and address
+        );
+
+        Test.startTest();
+        try {
+            insert invalidVendor; // Should fail due to validation
+            System.assert(false, 'Expected an exception due to validation error');
+        } catch (DmlException e) {
+            // Expecting a DML exception
+            System.assert(e.getMessage().contains('Contact Information is required'), 'Validation message not found');
+        }
+        Test.stopTest();
+
+        // Test case for updating a vendor
+        validVendor.Address__c = 'New Address';
+        
+        Test.startTest();
+        update validVendor; // Should succeed and log changes
+        Test.stopTest();
+
+        // Verify that the update was successful
+        Vendor__c updatedVendor = [SELECT Address__c FROM Vendor__c WHERE Id = :validVendor.Id];
+        System.assertEquals('New Address', updatedVendor.Address__c, 'The address should be updated successfully.');
+        
+    }
+}

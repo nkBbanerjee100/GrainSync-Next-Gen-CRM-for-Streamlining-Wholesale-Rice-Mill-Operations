@@ -1,0 +1,71 @@
+@isTest
+public class ProductTriggerTest {
+    @isTest
+    static void testProductTrigger() {
+        // Test case for inserting a valid product
+        Product__c validProduct = new Product__c(
+            Product_Name__c = 'Basmati Rice',
+            Type__c = 'Rice',
+            Stock_Level__c = 100,
+            Reorder_Threshold__c = 20,
+            Price__c = 15.99
+        );
+        
+        Test.startTest();
+        insert validProduct; // Should succeed
+        Test.stopTest();
+
+        // Verify the product was inserted
+        Product__c insertedProduct = [SELECT Id, Stock_Level__c, Price__c FROM Product__c WHERE Id = :validProduct.Id];
+        System.assertNotEquals(null, insertedProduct, 'The product should be inserted successfully.');
+        System.assertEquals(100, insertedProduct.Stock_Level__c, 'The stock level should match.');
+        
+        // Test case for inserting an invalid product (blank Product Name)
+        Product__c invalidProduct = new Product__c(
+            Type__c = 'Rice',
+            Stock_Level__c = 100,
+            Reorder_Threshold__c = 20,
+            Price__c = 15.99
+        );
+
+        Test.startTest();
+        try {
+            insert invalidProduct; // Should fail due to validation
+            System.assert(false, 'Expected an exception due to validation error');
+        } catch (DmlException e) {
+            // Expecting a DML exception
+            System.assert(e.getMessage().contains('Product Name cannot be blank'), 'Validation message not found');
+        }
+        Test.stopTest();
+
+        // Test case for inserting an invalid product (negative Price)
+        Product__c negativePriceProduct = new Product__c(
+            Product_Name__c = 'Basmati Rice',
+            Type__c = 'Rice',
+            Stock_Level__c = 100,
+            Reorder_Threshold__c = 20,
+            Price__c = -5.00
+        );
+
+        Test.startTest();
+        try {
+            insert negativePriceProduct; // Should fail due to validation
+            System.assert(false, 'Expected an exception due to validation error');
+        } catch (DmlException e) {
+            // Expecting a DML exception
+            System.assert(e.getMessage().contains('Price cannot be negative'), 'Validation message not found');
+        }
+        Test.stopTest();
+
+        // Test case for updating a product
+        validProduct.Price__c = 12.99;
+
+        Test.startTest();
+        update validProduct; // Should succeed
+        Test.stopTest();
+
+        // Verify that the update was successful
+        Product__c updatedProduct = [SELECT Price__c FROM Product__c WHERE Id = :validProduct.Id];
+        System.assertEquals(12.99, updatedProduct.Price__c, 'The price should be updated successfully.');
+    }
+}

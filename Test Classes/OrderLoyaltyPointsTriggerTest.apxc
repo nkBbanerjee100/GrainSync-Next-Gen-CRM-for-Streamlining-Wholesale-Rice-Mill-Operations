@@ -1,0 +1,40 @@
+@isTest
+public class OrderLoyaltyPointsTriggerTest {
+    
+    @isTest
+    static void testLoyaltyPointsIncrease() {
+        // Step 1: Create a Customer record
+        Customer__c testCustomer = new Customer__c(Name = 'Test Customer', loyalty_points__c = 5);
+        insert testCustomer;
+
+        // Step 2: Create an Order associated with the created Customer
+        Order__c testOrder = new Order__c(
+            Name = 'Test Order',
+            Customer__c = testCustomer.Id,
+            Order_Value__c = 100
+        );
+        
+        // Step 3: Insert the Order, which should trigger the loyalty points update
+        insert testOrder;
+        
+        // Step 4: Retrieve the updated Customer record to check loyalty points
+        testCustomer = [SELECT loyalty_points__c FROM Customer__c WHERE Id = :testCustomer.Id];
+
+        // Step 5: Assert that the loyalty points have increased by 1
+        System.assertEquals(6, testCustomer.loyalty_points__c, 'Loyalty points should increase by 1');
+    }
+
+    @isTest
+    static void testNoCustomer() {
+        // Step 1: Create an Order without associating a Customer
+        Order__c testOrderNoCustomer = new Order__c(
+            Name = 'Test Order No Customer',
+            Order_Value__c = 50
+        );
+
+        // Step 2: Insert the Order, which should not cause any loyalty points update
+        insert testOrderNoCustomer;
+
+        // Step 3: No assertions are needed here as the code should not throw errors if Customer__c is null
+    }
+}

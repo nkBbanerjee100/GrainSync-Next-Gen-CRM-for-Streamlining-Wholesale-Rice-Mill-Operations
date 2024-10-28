@@ -1,0 +1,16 @@
+trigger OrderTrigger on Order__c (before insert, before update) {
+    
+    // Assuming a fixed price for demonstration; you can adjust this according to your logic
+    Decimal fixedPrice = 100.00;
+
+    for (Order__c order : Trigger.new) {
+        // Check if Quantity and Customer are provided
+        if (order.Quantity__c != null && order.Customer__c != null) {
+            // Calculate total price based on the quantity
+            order.Total_Price__c = order.Quantity__c * fixedPrice;
+        } else {
+            order.Total_Price__c = 0; // Set to 0 if no quantity or customer is provided
+        }
+    }
+
+}

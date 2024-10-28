@@ -1,0 +1,8 @@
+trigger CustomerBeforeTrigger on Customer__c (before insert, before update) {
+    
+    for (Customer__c cust : Trigger.new) {
+        if (cust.Total_Orders__c == null) {
+            cust.Total_Orders__c = 0; // Initialize total orders if null
+        }
+    }
+}
